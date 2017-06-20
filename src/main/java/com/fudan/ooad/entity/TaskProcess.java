@@ -1,26 +1,32 @@
 package com.fudan.ooad.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import java.util.Date;
-import java.util.Set;
 
 /**
  * Created by zihao on 2017/6/17.
  */
-@Entity(name = "task_process")
+@Entity
+@Table(name = "task_process")
 public class TaskProcess {
     private CheckTask checkTask;
     private Company company;
     private Date finishTime;
     private TaskProcessState taskProcessState;
-    private Set<CheckItemProcess> checkItemProcesses;
+    private Integer id;
 
     @Id
-    @ManyToOne
-    @JoinColumn(name = "check_task_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @ManyToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "check_task_id", referencedColumnName = "id", nullable = false)
     public CheckTask getCheckTask() {
         return checkTask;
     }
@@ -29,9 +35,8 @@ public class TaskProcess {
         this.checkTask = checkTask;
     }
 
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "company_id")
+    @ManyToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "company_id", referencedColumnName = "id", nullable = false)
     public Company getCompany() {
         return company;
     }
@@ -56,4 +61,19 @@ public class TaskProcess {
         this.taskProcessState = taskProcessState;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if ((obj == null) || !(obj instanceof TaskProcess))
+            return false;
+        TaskProcess that = (TaskProcess) obj;
+        return !(this.getCheckTask() == null || this.getCompany() == null) && this.getCheckTask().equals(that.getCheckTask()) && this.getCompany().equals(that.getCompany());
+    }
+
+    @Override
+    public int hashCode() {
+        if (this.getCheckTask() == null || this.getCompany() == null)
+            return 0;
+        return this.getCheckTask().hashCode() * 31 + this.getCompany().hashCode();
+    }
 }

@@ -1,33 +1,16 @@
 package com.fudan.ooad.service;
 
-import com.fudan.ooad.entity.CheckItem;
 import com.fudan.ooad.repository.CheckItemRepository;
-
-import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
- * Created by Jindiwei on 2017/6/19.
+ * Created by zihao on 2017/6/17.
  */
-public class CheckItemService implements ICheckItemService {
+@Service
+public class CheckItemService {
+    @Autowired
     CheckItemRepository checkItemRepository;
-    @Override
-    public void addCheckItem(CheckItem checkItem) {
-        checkItemRepository.save(checkItem);
-    }
 
-    @Override
-    public void modifyCheckItem(CheckItem checkItem) {
 
-    }
-
-    @Override
-    public void deleteCheckItem(CheckItem checkItem) {
-        checkItemRepository.delete(checkItem);
-    }
-
-    @Override
-    public Set<CheckItem> searchCheckItem(String keyword) {
-
-        return null;
-    }
 }
