@@ -1,10 +1,7 @@
 package com.fudan.ooad.service;
 
 import com.fudan.ooad.entity.CheckItem;
-import com.fudan.ooad.exception.BaseException;
-import com.fudan.ooad.exception.InvalidPropertyException;
-import com.fudan.ooad.exception.NullEntityException;
-import com.fudan.ooad.exception.SystemException;
+import com.fudan.ooad.exception.*;
 import com.fudan.ooad.repository.CheckItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,42 +12,106 @@ import java.util.Set;
  * Created by Jindiwei on 2017/6/20.
  */
 @Service
-public class CheckItemService implements ICheckItemService {
+public class CheckItemService{
 
     @Autowired
     private CheckItemRepository checkItemRepository;
 
     private final String SERVICE_NAME = "CheckItemService";
 
-    @Override
-    public void createCheckItem(CheckItem checkItem) throws BaseException {
+
+    public void createCheckItem(String title, String content) throws BaseException {
         //添加： 属性：title content
-        // 1、title是否已存在
-        // 2、content是否相同
-        if(!CheckItemExist(checkItem)){
-            try {
-                checkItemRepository.save(checkItem);
-            }catch(Exception e){
-                throw new SystemException(SERVICE_NAME, e.getMessage());
-            }
-        }
-        else{
-            throw new InvalidPropertyException(
+        /*
+        检查title和content是否存在
+         */
+        if (checkItemRepository.findByTitle(title) != null) {
+            throw new DuplicatedPropertyException(
                     SERVICE_NAME,
-                    "The checkItem is already in the database."
+                    "CheckItem with same tile is exist in the database."
             );
         }
+        if (checkItemRepository.findByContent(content) != null) {
+            throw new DuplicatedPropertyException(
+                    SERVICE_NAME,
+                    "CheckItem with same content is exist in the database."
+            );
+        }
+        CheckItem checkItem = new CheckItem();
+        checkItem.setTitle(title);
+        checkItem.setContent(content);
+        try {
+            checkItemRepository.save(checkItem);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
+        }
+
     }
 
-    @Override
-    public void modifyCheckItem(CheckItem checkItem) throws BaseException {
-        //检查是否有ID
+
+    public void modifyCheckItem(CheckItem checkItem, String title, String content) throws BaseException {
+        /*
+        检查title和content是否要修改
+        修改后的title或content是否和已经存在的冲突
+        判断Item是否已经发布
+         */
+
+        if(checkItem.getId() == null){
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "checkItem is a new checkItem, you can use CheckItemService.createCheckItem() to add this item."
+            );
+        }
+
         if(!checkItemRepository.exists(checkItem.getId())){
             throw new NullEntityException(
                     SERVICE_NAME,
                     "checkItem does not exist in database, Try to use checkItemService.createCheckItem instead"
             );
         }
+
+        //判断是否有关联的已发布的事务
+        int size = checkItem.getCheckTasks().size();
+        if(size == 0){
+            throw new InvalidOperationException(
+                    SERVICE_NAME,
+                    "CheckItem has already binded with a least one CheckTask."
+            );
+        }
+
+        if(title == "" || content == ""){
+            throw new InvalidPropertyException(
+                    SERVICE_NAME,
+                    "title or content can not be null."
+            );
+        }
+        //title need to modify
+        if(!checkItem.getTitle().equals(title)){
+            if(checkItemRepository.findByTitle(title) == null){
+                checkItem.setTitle(title);
+            }
+            else{
+                throw new DuplicatedPropertyException(
+                        SERVICE_NAME,
+                        "There already exist a checkItem with the same title."
+                );
+            }
+        }
+
+        //content need to modify
+        if(!checkItem.getContent().equals(content)){
+            if(checkItemRepository.findByContent(content) == null){
+                checkItem.setContent(content);
+            }
+            else{
+                throw new DuplicatedPropertyException(
+                        SERVICE_NAME,
+                        "There already exist a checkItem with the same content."
+                );
+            }
+        }
+
+
         else{
             try {
                 checkItemRepository.save(checkItem);
@@ -60,7 +121,7 @@ public class CheckItemService implements ICheckItemService {
         }
     }
 
-    @Override
+
     public void deleteCheckItem(CheckItem checkItem) throws BaseException{
         if(!checkItemRepository.exists(checkItem.getId())){
             throw new NullEntityException(
@@ -77,7 +138,7 @@ public class CheckItemService implements ICheckItemService {
         }
     }
 
-    @Override
+
     public Set<CheckItem> searchCheckItem(String keyword) throws BaseException{
         Set<CheckItem> checkItems;
         try {
