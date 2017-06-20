@@ -7,7 +7,7 @@ import org.junit.Test;
 /**
  * Created by Jindiwei on 2017/6/20.
  */
-public class CompanyServiceTest {
+public class CompanyManagerServiceTest {
     @Before
     public void setUp() throws Exception {
     }
@@ -17,15 +17,19 @@ public class CompanyServiceTest {
     }
 
     @Test
-    public void getAllTaskProcesses() throws Exception {
+    public void getAllCompanyList() throws Exception {
     }
 
     @Test
-    public void getAllCheckItemsProcessInTaskProcess() throws Exception {
+    public void createCompany() throws Exception {
     }
 
     @Test
-    public void setCheckItemState() throws Exception {
+    public void editCompany() throws Exception {
+    }
+
+    @Test
+    public void deleteCompany() throws Exception {
     }
 
 }
