@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Created by zihao on 2017/6/7.
  */
-@Entity(name = "checkitem")
+@Entity(name = "check_item")
 public class CheckItem {
     private Integer id;
     private String title;
@@ -20,7 +20,7 @@ public class CheckItem {
         return id;
     }
 
-    public void setId(Integer id) {
+    private void setId(Integer id) {
         this.id = id;
     }
 

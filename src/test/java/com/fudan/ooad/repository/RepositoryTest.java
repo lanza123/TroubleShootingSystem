@@ -31,6 +31,8 @@ public class RepositoryTest {
     private TemplateRepository templateRepository;
     @Autowired
     private CheckItemRepository checkItemRepository;
+    @Autowired
+    private CheckItemProcessRepository checkItemProcessRepository;
 
     @Test
     public void testCheckItemCRUD() {
@@ -93,13 +95,11 @@ public class RepositoryTest {
         checkItem.setTitle(title);
         checkItem.setContent(content);
 
+        checkItemRepository.save(checkItem);
+
         Template template = new Template();
         template.setTitle(title);
         template.setDescription(description);
-
-        template.addCheckItem(checkItem);
-        Assert.assertTrue(template.getCheckItems().contains(checkItem));
-        Assert.assertTrue(checkItem.getTemplates().contains(template));
 
         // add checkItem from template
         template.addCheckItem(checkItem);
@@ -177,15 +177,13 @@ public class RepositoryTest {
         Template template = new Template();
         template.setTitle(s);
         template.setDescription(s);
+        templateRepository.save(template);
 
         CheckTask checkTask = new CheckTask();
         checkTask.setTitle(s);
         checkTask.setTemplate(template);
-
-        // add checkTask that contains a template
         checkTaskRepository.save(checkTask);
 
-        // template should be added to database
         CheckTask foundCheckTask = checkTaskRepository.findByTitle(s);
         Template foundTemplate = templateRepository.findByTitle(s);
 
@@ -198,6 +196,7 @@ public class RepositoryTest {
         // delete checkTask should not delete template,
         // but the association should be removed
         checkTaskRepository.delete(checkTask);
+        Assert.assertNull(checkTaskRepository.findByTitle(s));
         foundTemplate = templateRepository.findByTitle(s);
         Assert.assertNotNull(foundTemplate);
         Assert.assertFalse(foundTemplate.getCheckTasks().contains(checkTask));
@@ -211,44 +210,76 @@ public class RepositoryTest {
     public void testTaskProcessCRUD() {
         String s = DateUtil.getCurrentDate().toString();
 
-        Company company1 = new Company();
-        company1.setName(s + 1);
-        Company company2 = new Company();
-        company2.setName(s + 2);
+        Company company = new Company();
+        company.setName(s);
 
-        companyRepository.save(company1);
+        companyRepository.save(company);
 
         CheckTask checkTask = new CheckTask();
         checkTask.setTitle(s);
 
         checkTaskRepository.save(checkTask);
 
-        TaskProcess taskProcess1 = new TaskProcess();
-        taskProcess1.setCheckTask(checkTask);
-        taskProcess1.setCompany(company1);
+        TaskProcess taskProcess = new TaskProcess();
+        taskProcess.setCheckTask(checkTask);
+        taskProcess.setCompany(company);
 
-        TaskProcess taskProcess2 = new TaskProcess();
-        taskProcess2.setCheckTask(checkTask);
-        taskProcess2.setCompany(company2);
+        taskProcessRepository.save(taskProcess);
 
-        taskProcessRepository.save(taskProcess1);
+        CheckTask foundCheckTask = checkTaskRepository.findByTitle(s);
+        Assert.assertTrue(foundCheckTask.getTaskProcesses().contains(taskProcess));
 
-        checkTask.removeTaskProcess(taskProcess1);
+        taskProcessRepository.delete(taskProcess);
+
+        foundCheckTask = checkTaskRepository.findByTitle(s);
+        Assert.assertEquals(0, foundCheckTask.getTaskProcesses().size());
+
+        Company foundCompany = companyRepository.findByName(s);
+        Assert.assertEquals(0, foundCompany.getTaskProcesses().size());
+
+        checkTaskRepository.delete(foundCheckTask);
+        companyRepository.delete(foundCompany);
+    }
+
+    @Test
+    public void testCheckItemProcess() {
+        String s = DateUtil.getCurrentDate().toString();
+        Company company = new Company();
+        company.setName(s);
+        companyRepository.save(company);
+
+        CheckItem checkItem = new CheckItem();
+        checkItem.setTitle(s);
+        checkItemRepository.save(checkItem);
+
+        Template template = new Template();
+        template.setTitle(s);
+        template.addCheckItem(checkItem);
+        templateRepository.save(template);
+
+        CheckTask checkTask = new CheckTask();
+        checkTask.setTitle(s);
+        checkTask.setTemplate(template);
         checkTaskRepository.save(checkTask);
 
+        TaskProcess taskProcess = new TaskProcess();
+        taskProcess.setCheckTask(checkTask);
+        taskProcess.setCompany(company);
+        taskProcessRepository.save(taskProcess);
 
-        // add task process from check task
-        checkTask.addTaskProcess(taskProcess2);
-        checkTaskRepository.save(checkTask);
-//        Assert.assertTrue(taskProcessRepository.findAll().contains(taskProcess1));
-//
-//        CheckTask found = checkTaskRepository.findByTitle(s);
-        Assert.assertEquals(2, checkTaskRepository.findByTitle(s).getTaskProcesses().size());
+        CheckItemProcess checkItemProcess = new CheckItemProcess();
+        checkItemProcess.setTaskProcess(taskProcess);
+        checkItemProcess.setCheckItem(checkItem);
+        checkItemProcessRepository.save(checkItemProcess);
 
-        checkTask.removeTaskProcess(taskProcess2);
-        checkTaskRepository.save(checkTask);
-        Assert.assertEquals(0, checkTask.getTaskProcesses().size());
-        Assert.assertEquals(0, checkTaskRepository.findOne(checkTask.getId()).getTaskProcesses().size());
+        Assert.assertEquals(checkItem, checkItemProcess.getCheckItem());
 
+        checkItemProcessRepository.delete(checkItemProcess);
+        taskProcessRepository.delete(taskProcess);
+        checkTaskRepository.delete(checkTask);
+        templateRepository.delete(template);
+        checkItem = checkItemRepository.findByTitle(s);
+        checkItemRepository.delete(checkItem);
+        companyRepository.delete(company);
     }
 }

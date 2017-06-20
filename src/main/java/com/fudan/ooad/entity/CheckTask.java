@@ -24,7 +24,7 @@ public class CheckTask implements Serializable {
         return id;
     }
 
-    public void setId(Integer id) {
+    private void setId(Integer id) {
         this.id = id;
     }
 
@@ -37,7 +37,7 @@ public class CheckTask implements Serializable {
         this.title = title;
     }
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne
     @JoinColumn(name = "template_id")
     public Template getTemplate() {
         return template;
@@ -47,7 +47,7 @@ public class CheckTask implements Serializable {
         this.template = template;
     }
 
-    @OneToMany(mappedBy = "checkTask", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "checkTask", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     public Set<TaskProcess> getTaskProcesses() {
         return taskProcesses;
     }
