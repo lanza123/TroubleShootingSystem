@@ -1,6 +1,6 @@
 package com.fudan.ooad;
 
-import com.fudan.ooad.entity.*;
+import com.fudan.ooad.entity.CheckItem;
 import com.fudan.ooad.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,9 +9,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.sql.Date;
-import java.util.Calendar;
 
 @SpringBootApplication
 public class TroubleShootingSystemApplication implements CommandLineRunner {
@@ -33,25 +30,32 @@ public class TroubleShootingSystemApplication implements CommandLineRunner {
     @Autowired
     CheckTaskRepository checkTaskRepository;
 
-    public void testAddRepository() {
-        Company company = new Company();
-        company.setName("company1");
-        company.setCompanyCode("company_code1");
-        company.setOrganizationCode("organizationCode");
+//    public void testAddRepository() {
+//        Company company = new Company();
+//        company.setName("company1");
+//        company.setCompanyCode("company_code1");
+//        company.setOrganizationCode("organizationCode");
+//
+//        CheckTask checkTask = new CheckTask();
+//        checkTask.setTitle("task1");
+//        checkTask.setPostDate(Date.from(Calendar.getInstance().toInstant()));
+//
+//        checkTask.setTemplate(templateRepository.findAll().get(0));
+//
+//        TaskProcess taskProcess = new TaskProcess();
+//        taskProcess.setCompany(company);
+//        taskProcess.setCheckTask(checkTaskRepository.findAll().get(0));
+////        taskProcess.setId(taskProcessID);
+//        checkTaskRepository.save(checkTask);
+//        taskProcessRepository.save(taskProcess);
+////        taskProcessRepository.findAll().get(0).equals(taskProcess);
+//    }
 
-        CheckTask checkTask = new CheckTask();
-        checkTask.setTitle("task1");
-        checkTask.setPostDate(Date.from(Calendar.getInstance().toInstant()));
-
-        checkTask.setTemplate(templateRepository.findAll().get(0));
-
-        TaskProcess taskProcess = new TaskProcess();
-        taskProcess.setCompany(company);
-        taskProcess.setCheckTask(checkTaskRepository.findAll().get(0));
-//        taskProcess.setId(taskProcessID);
-        checkTaskRepository.save(checkTask);
-        taskProcessRepository.save(taskProcess);
-//        taskProcessRepository.findAll().get(0).equals(taskProcess);
+    public void testAddItem(){
+        System.out.println("here~~~~~~~~~~~~~~~~");
+        CheckItem checkItem = new CheckItem();
+        checkItem.setTitle("jindiwei");
+        checkItem.setContent("Paul king");
     }
 
 	public static void main(String[] args) {
@@ -61,7 +65,7 @@ public class TroubleShootingSystemApplication implements CommandLineRunner {
 	@Override
 	@Transactional
 	public void run(String... strings) throws Exception {
-
+        testAddItem();
 //		CheckItem checkItemA = new CheckItem();
 //		checkItemA.setTitle("A");
 //		checkItemA.setContent("contentA");
