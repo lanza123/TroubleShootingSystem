@@ -1,6 +1,6 @@
 package com.fudan.ooad.service;
 
-import com.fudan.ooad.Exception.ItemExistException;
+import com.fudan.ooad.Exception.ItemNotExistException;
 import com.fudan.ooad.entity.CheckItem;
 import com.fudan.ooad.repository.CheckItemRepository;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,7 +14,7 @@ import java.util.Set;
 public class CheckItemService implements ICheckItemService {
     CheckItemRepository checkItemRepository;
     @Override
-    public void addCheckItem(CheckItem checkItem) throws ItemExistException{
+    public void addCheckItem(CheckItem checkItem) throws ItemNotExistException {
         //添加： 属性：title content
         // 1、title是否已存在
         // 2、content是否相同
@@ -22,24 +22,23 @@ public class CheckItemService implements ICheckItemService {
             checkItemRepository.save(checkItem);
         }
         else{
-            //TODO 报错
+            throw new ItemNotExistException(this.getClass().getName());
         }
     }
 
     @Override
-    public void modifyCheckItem(CheckItem checkItem) throws ItemExistException{
+    public void modifyCheckItem(CheckItem checkItem){
         //检查是否有ID
         if(checkItem.getId() == null){
             //是一个新的检查项目
             addCheckItem(checkItem);
-
         }
         else{
             if(checkItemRepository.findOne(checkItem.getId()) != null){
                 checkItemRepository.save(checkItem);
             }
             else{
-                // TODO 项目不存在
+                throw new ItemNotExistException(this.getClass().getName());
             }
         }
     }
@@ -48,21 +47,21 @@ public class CheckItemService implements ICheckItemService {
     public void deleteCheckItem(CheckItem checkItem) {
         //检查是否有ID
         if(checkItem.getId() == null){
-            // TODO 项目不存在
+            throw new ItemNotExistException(this.getClass().getName());// TODO 待检查
         }
         else{
             if(checkItemRepository.findOne(checkItem.getId()) != null){
                 checkItemRepository.delete(checkItem.getId());
             }
             else{
-                // TODO 项目不存在
+                throw new ItemNotExistException(this.getClass().getName());
             }
         }
     }
 
     @Override
     public Set<CheckItem> searchCheckItem(String keyword) {
-        return null;
+        return checkItemRepository.findByTitleContainsOrContentContains(keyword);
     }
 
     public boolean CheckItemExist(CheckItem checkItem){
