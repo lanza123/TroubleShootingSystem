@@ -15,14 +15,13 @@ import java.util.Set;
  * Created by Jindiwei on 2017/6/20.
  */
 @Service
-public class CheckItemService implements ICheckItemService {
+public class CheckItemService {
 
     @Autowired
     private CheckItemRepository checkItemRepository;
 
     private final String SERVICE_NAME = "CheckItemService";
 
-    @Override
     public void createCheckItem(CheckItem checkItem) throws BaseException {
         //添加： 属性：title content
         // 1、title是否已存在
@@ -42,7 +41,6 @@ public class CheckItemService implements ICheckItemService {
         }
     }
 
-    @Override
     public void modifyCheckItem(CheckItem checkItem) throws BaseException {
         //检查是否有ID
         if(!checkItemRepository.exists(checkItem.getId())){
@@ -60,7 +58,6 @@ public class CheckItemService implements ICheckItemService {
         }
     }
 
-    @Override
     public void deleteCheckItem(CheckItem checkItem) throws BaseException{
         if(!checkItemRepository.exists(checkItem.getId())){
             throw new NullEntityException(
@@ -77,7 +74,6 @@ public class CheckItemService implements ICheckItemService {
         }
     }
 
-    @Override
     public Set<CheckItem> searchCheckItem(String keyword) throws BaseException{
         Set<CheckItem> checkItems;
         try {

@@ -19,7 +19,7 @@ import java.util.Set;
  * Created by Jindiwei on 2017/6/19.
  */
 @Service
-public class CompanyService implements ICompanyService {
+public class CompanyService {
 
     @Autowired
     private CompanyRepository companyRepository;
@@ -35,7 +35,7 @@ public class CompanyService implements ICompanyService {
 
     private final String SERVICE_NAME = "CompanyService";
 
-    @Override
+    
     public void setCheckItemState(Company company, CheckTask checkTask, CheckItem checkItem, ItemState itemState) throws BaseException{
         if(!companyRepository.exists(company.getId())){
             throw new NullEntityException(
@@ -71,15 +71,13 @@ public class CompanyService implements ICompanyService {
                     "You can only set the state to finished."
             );
         }
-        checkTask
-
     }
 
     /**
      * @param company 公司对象
      * @return 该公司需要检查的事务列表
      */
-    @Override
+    
     public Set<TaskProcess> getTaskProcesses(Company company) {
         return null;
     }
@@ -89,7 +87,7 @@ public class CompanyService implements ICompanyService {
      * @param checkTask 检查事务
      * @return 某项事务内相关项目的检查情况
      */
-    @Override
+    
     public TaskProcess getCheckItemsInTask(Company company, CheckTask checkTask) {
         return null;
     }
