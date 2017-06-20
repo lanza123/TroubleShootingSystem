@@ -20,7 +20,7 @@ public class CheckItemService{
     private final String SERVICE_NAME = "CheckItemService";
 
 
-    public void createCheckItem(String title, String content) throws BaseException {
+    public CheckItem createCheckItem(String title, String content) throws BaseException {
         //添加： 属性：title content
         /*
         检查title和content是否存在
@@ -42,6 +42,7 @@ public class CheckItemService{
         checkItem.setContent(content);
         try {
             checkItemRepository.save(checkItem);
+            return checkItem;
         } catch (Exception e) {
             throw new SystemException(SERVICE_NAME, e.getMessage());
         }
