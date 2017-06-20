@@ -1,67 +1,91 @@
 package com.fudan.ooad.service;
 
-import com.fudan.ooad.Exception.ItemNotExistException;
 import com.fudan.ooad.entity.CheckItem;
+import com.fudan.ooad.exception.BaseException;
+import com.fudan.ooad.exception.InvalidPropertyException;
+import com.fudan.ooad.exception.NullEntityException;
+import com.fudan.ooad.exception.SystemException;
 import com.fudan.ooad.repository.CheckItemRepository;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
 /**
  * Created by Jindiwei on 2017/6/20.
  */
-@SpringBootApplication
+@Service
 public class CheckItemService implements ICheckItemService {
-    CheckItemRepository checkItemRepository;
+
+    @Autowired
+    private CheckItemRepository checkItemRepository;
+
+    private final String SERVICE_NAME = "CheckItemService";
+
     @Override
-    public void addCheckItem(CheckItem checkItem) throws ItemNotExistException {
+    public void createCheckItem(CheckItem checkItem) throws BaseException {
         //添加： 属性：title content
         // 1、title是否已存在
         // 2、content是否相同
         if(!CheckItemExist(checkItem)){
-            checkItemRepository.save(checkItem);
-        }
-        else{
-            throw new ItemNotExistException(this.getClass().getName());
-        }
-    }
-
-    @Override
-    public void modifyCheckItem(CheckItem checkItem){
-        //检查是否有ID
-        if(checkItem.getId() == null){
-            //是一个新的检查项目
-            addCheckItem(checkItem);
-        }
-        else{
-            if(checkItemRepository.findOne(checkItem.getId()) != null){
+            try {
                 checkItemRepository.save(checkItem);
+            }catch(Exception e){
+                throw new SystemException(SERVICE_NAME, e.getMessage());
             }
-            else{
-                throw new ItemNotExistException(this.getClass().getName());
-            }
-        }
-    }
-
-    @Override
-    public void deleteCheckItem(CheckItem checkItem) {
-        //检查是否有ID
-        if(checkItem.getId() == null){
-            throw new ItemNotExistException(this.getClass().getName());// TODO 待检查
         }
         else{
-            if(checkItemRepository.findOne(checkItem.getId()) != null){
-                checkItemRepository.delete(checkItem.getId());
-            }
-            else{
-                throw new ItemNotExistException(this.getClass().getName());
+            throw new InvalidPropertyException(
+                    SERVICE_NAME,
+                    "The checkItem is already in the database."
+            );
+        }
+    }
+
+    @Override
+    public void modifyCheckItem(CheckItem checkItem) throws BaseException {
+        //检查是否有ID
+        if(!checkItemRepository.exists(checkItem.getId())){
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "checkItem does not exist in database, Try to use checkItemService.createCheckItem instead"
+            );
+        }
+        else{
+            try {
+                checkItemRepository.save(checkItem);
+            }catch(Exception e){
+                throw new SystemException(SERVICE_NAME, e.getMessage());
             }
         }
     }
 
     @Override
-    public Set<CheckItem> searchCheckItem(String keyword) {
-        return checkItemRepository.findByTitleContainsOrContentContains(keyword);
+    public void deleteCheckItem(CheckItem checkItem) throws BaseException{
+        if(!checkItemRepository.exists(checkItem.getId())){
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "checkItem does not exist in database, Try to use checkItemService.createCheckItem instead"
+            );
+        }
+        else {
+            try {
+                checkItemRepository.delete(checkItem.getId());
+            }catch(Exception e){
+                throw new SystemException(SERVICE_NAME, e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public Set<CheckItem> searchCheckItem(String keyword) throws BaseException{
+        Set<CheckItem> checkItems;
+        try {
+            checkItems = checkItemRepository.findByTitleContainsOrContentContains(keyword);
+        }catch(Exception e){
+            throw new SystemException(SERVICE_NAME, e.getMessage());
+        }
+        return checkItems;
     }
 
     public boolean CheckItemExist(CheckItem checkItem){
