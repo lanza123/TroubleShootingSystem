@@ -50,20 +50,14 @@ public class CheckItemService{
 
 
     public void modifyCheckItem(CheckItem checkItem, String title, String content) throws BaseException {
-        /*
-        检查title和content是否要修改
-        修改后的title或content是否和已经存在的冲突
-        判断Item是否已经发布
-         */
-
-        if(checkItem.getId() == null){
+        if (checkItem.getId() == null) {
             throw new NullEntityException(
                     SERVICE_NAME,
                     "checkItem is a new checkItem, you can use CheckItemService.createCheckItem() to add this item."
             );
         }
 
-        if(!checkItemRepository.exists(checkItem.getId())){
+        if (!checkItemRepository.exists(checkItem.getId())) {
             throw new NullEntityException(
                     SERVICE_NAME,
                     "checkItem does not exist in database, Try to use checkItemService.createCheckItem instead"
@@ -72,25 +66,24 @@ public class CheckItemService{
 
         //判断是否有关联的已发布的事务
         int size = checkItem.getCheckTasks().size();
-        if(size == 0){
+        if (size == 0) {
             throw new InvalidOperationException(
                     SERVICE_NAME,
                     "CheckItem has already binded with a least one CheckTask."
             );
         }
 
-        if(title == "" || content == ""){
+        if (title == "" || content == "") {
             throw new InvalidPropertyException(
                     SERVICE_NAME,
                     "title or content can not be null."
             );
         }
         //title need to modify
-        if(!checkItem.getTitle().equals(title)){
-            if(checkItemRepository.findByTitle(title) == null){
+        if (!checkItem.getTitle().equals(title)) {
+            if (checkItemRepository.findByTitle(title) == null) {
                 checkItem.setTitle(title);
-            }
-            else{
+            } else {
                 throw new DuplicatedPropertyException(
                         SERVICE_NAME,
                         "There already exist a checkItem with the same title."
@@ -99,11 +92,10 @@ public class CheckItemService{
         }
 
         //content need to modify
-        if(!checkItem.getContent().equals(content)){
-            if(checkItemRepository.findByContent(content) == null){
+        if (!checkItem.getContent().equals(content)) {
+            if (checkItemRepository.findByContent(content) == null) {
                 checkItem.setContent(content);
-            }
-            else{
+            } else {
                 throw new DuplicatedPropertyException(
                         SERVICE_NAME,
                         "There already exist a checkItem with the same content."
@@ -111,30 +103,44 @@ public class CheckItemService{
             }
         }
 
-
-        else{
-            try {
-                checkItemRepository.save(checkItem);
-            }catch(Exception e){
-                throw new SystemException(SERVICE_NAME, e.getMessage());
-            }
+        try {
+            //保存
+            checkItemRepository.save(checkItem);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
         }
     }
 
 
-    public void deleteCheckItem(CheckItem checkItem) throws BaseException{
-        if(!checkItemRepository.exists(checkItem.getId())){
+    public void deleteCheckItem(CheckItem checkItem) throws BaseException {
+        if (checkItem.getId() == null) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "checkItem is a new checkItem, you can use CheckItemService.createCheckItem() to add this item."
+            );
+        }
+
+        if (!checkItemRepository.exists(checkItem.getId())) {
             throw new NullEntityException(
                     SERVICE_NAME,
                     "checkItem does not exist in database, Try to use checkItemService.createCheckItem instead"
             );
         }
-        else {
-            try {
-                checkItemRepository.delete(checkItem.getId());
-            }catch(Exception e){
-                throw new SystemException(SERVICE_NAME, e.getMessage());
-            }
+
+        //判断是否有关联的已发布的事务
+        int size = checkItem.getCheckTasks().size();
+        if (size == 0) {
+            throw new InvalidOperationException(
+                    SERVICE_NAME,
+                    "CheckItem has already binded with a least one CheckTask."
+            );
+        }
+
+        try {
+            //删除操作
+            checkItemRepository.delete(checkItem.getId());
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
         }
     }
 
@@ -149,18 +155,4 @@ public class CheckItemService{
         return checkItems;
     }
 
-    public boolean CheckItemExist(CheckItem checkItem){
-        String title = checkItem.getTitle();
-        String content = checkItem.getContent();
-        //判断相同标题的检查项目是否存在
-        if(checkItemRepository.findByTitle(title) != null){
-            return true;
-        }
-        else if(checkItemRepository.findByContent(content) != null) {
-            return true;
-        }
-        else{
-            return false;
-        }
-    }
 }
