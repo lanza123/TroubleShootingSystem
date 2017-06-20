@@ -1,167 +1,192 @@
 package com.fudan.ooad.service;
 
 import com.fudan.ooad.entity.CheckItem;
+import com.fudan.ooad.entity.CheckTask;
 import com.fudan.ooad.entity.Template;
+import com.fudan.ooad.exception.*;
 import com.fudan.ooad.repository.CheckItemRepository;
+import com.fudan.ooad.repository.CheckTaskRepository;
 import com.fudan.ooad.repository.TemplateRepository;
+import com.fudan.ooad.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
+import java.util.Date;
 import java.util.Set;
 
 /**
- * Created by Jindiwei on 2017/6/19.
+ * Created by zihao on 2017/6/20.
  */
-@SpringBootApplication
-public class TemplateService implements ITemplateService {
-
+@Service
+public class TemplateService {
     @Autowired
-    TemplateRepository templateRepository;
-
+    private TemplateRepository templateRepository;
     @Autowired
-    CheckItemRepository checkItemRepository;
+    private CheckItemRepository checkItemRepository;
+    @Autowired
+    private CheckTaskRepository checkTaskRepository;
 
+    private final String SERVICE_NAME = "TemplateService";
 
-    /**
-     * @param template  待添加项目的模板
-     * @param checkItem 要添加的检查项目
-     */
-    @Override
-    public void templateAddCheckItem(Template template, CheckItem checkItem) {
-        if(templateAlreadyExist(template)){
-            if(!checkItemAlreadyInTemplate(template, checkItem)){
-                template.addCheckItem(checkItem);
-                templateRepository.save(template);
-            }
-            else{
-                //TODO template 中已存在 checkItem
-            }
+    public CheckTask postToCheckTask(Template template, String checkTaskTitle, Date deadline) throws BaseException {
+        if (!templateRepository.exists(template.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Cannot post a template that does not exist in database to a checkTask."
+            );
         }
-        else{
-            //TODO template不存在
+        CheckTask checkTask = new CheckTask();
+        checkTask.addCheckItems(template.getCheckItems());
+        checkTask.setTitle(checkTaskTitle);
+        if (checkTaskRepository.findByTitle(checkTaskTitle) != null) {
+            throw new InvalidPropertyException(
+                    SERVICE_NAME,
+                    "Unique property CheckTask.checkTaskTitle already exist."
+            );
         }
+        Date cur = DateUtil.getCurrentDate();
+        checkTask.setPostDate(cur);
+        if (deadline.before(cur)) {
+            throw new InvalidPropertyException(
+                    SERVICE_NAME,
+                    "Deadline is earlier than current date."
+            );
+        }
+        checkTask.setPostDate(deadline);
+        try {
+            checkTaskRepository.save(checkTask);
+        } catch (Exception e) {
+            throw new SystemException(
+                    SERVICE_NAME,
+                    e.getMessage()
+            );
+        }
+        return checkTask;
     }
 
-    /**
-     * @param template  待删除项目的模板
-     * @param checkItem 要删除的检查项目
-     */
-    @Override
-    public void templateDeleteCheckItem(Template template, CheckItem checkItem) {
-        if(checkItem.getId() == null){
-            return;//TODO checkItem is note exist
+    public Template createTemplate(String title, String description, Set<CheckItem> checkItems) throws BaseException {
+        if (templateRepository.findByTitle(title) != null) {
+            throw new InvalidPropertyException(
+                    SERVICE_NAME,
+                    "Unique property Template.title already exist."
+            );
         }
-        else if(templateAlreadyExist(template)){
-            // checkItem is in the template
-            if(checkItemAlreadyInTemplate(template, checkItem)){
-                Set<CheckItem> checkItemSet = template.getCheckItems();
-                for(CheckItem item : checkItemSet){
-                    if(checkItem.getId() == item.getId()){
-                        // delete the item and return
-                        checkItemSet.remove(item);
-                        return;
-                    }
-                }
-            }
-            else{
-                //TODO template 中不存在 checkItem
-            }
-        }
-        else{
-            //TODO template不存在
-        }
-    }
-
-    /**
-     * @param template 待创建的模板
-     */
-    @Override
-    public void createTemplate(Template template) {
-        if(!templateAlreadyExist(template)){
+        Template template = new Template();
+        template.setTitle(title);
+        template.setDescription(description);
+        template.addCheckItems(checkItems);
+        try {
             templateRepository.save(template);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
         }
-        else{
-            //TODO template already exist
-        }
+        return template;
     }
 
-    /**
-     * @param template 待修改的模板
-     */
-    @Override
-    public void modifyTemplate(Template template) {
-        Integer id = template.getId();
-        if(templateRepository.exists(id)){
+    public Template addCheckItem(Template template, CheckItem checkItem) throws BaseException {
+        if (!templateRepository.exists(template.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Template does not exist in database. Try to use templateService.createTemplate instead"
+            );
+        }
+        if (!checkItemRepository.exists(checkItem.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Cannot add a checkItem that does not exist in database to a template."
+            );
+        }
+        if (template.getCheckItems().contains(checkItem)) {
+            throw new DuplicatedPropertyException(
+                    SERVICE_NAME,
+                    "This template already contains this check item"
+            );
+        }
+        template.addCheckItem(checkItem);
+        try {
             templateRepository.save(template);
+            checkItemRepository.save(checkItem);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
         }
-        else{
-            //TODO template already exist
+        return template;
+    }
+
+    public Template deleteCheckItem(Template template, CheckItem checkItem) throws BaseException {
+        if (!templateRepository.exists(template.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Template does not exist in database. Try to use templateService.createTemplate instead"
+            );
         }
+        if (!checkItemRepository.exists(checkItem.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Cannot add a checkItem that does not exist in database to a template."
+            );
+        }
+        if (!template.getCheckItems().contains(checkItem)) {
+            throw new InvalidPropertyException(
+                    SERVICE_NAME,
+                    "This template does not contain this check item"
+            );
+        }
+        template.removeCheckItem(checkItem);
+        try {
+            templateRepository.save(template);
+            checkItemRepository.save(checkItem);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
+        }
+        return template;
     }
 
     /**
-     * @param template 待删除的模板
+     * Edit template message including title and description. If you want to edit template's check items,
+     * try to use addCheckItem or removeCheckItem instead
+     * </p>
+     * If you only want to edit one property and keep another, just set another property to null.
+     * @param template
+     * @param title
+     * @param description
      */
-    @Override
-    public void deleteTemplate(Template template) {
-        Integer id = template.getId();
-        //TODO 为添加判断模板是否被发放
-        if(templateRepository.exists(id)){
-            templateRepository.delete(id);
+    public Template editTemplateMessage(Template template, String title, String description) throws BaseException {
+        if (!templateRepository.exists(template.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Template does not exist in database."
+            );
         }
-        else{
-            //TODO 不存在该模板
+        if (title != null) {
+            template.setTitle(title);
+        }
+        if (description != null) {
+            template.setDescription(description);
+        }
+        try {
+            templateRepository.save(template);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
+        }
+        return template;
+    }
+
+    public void deleteTemplate(Template template) throws BaseException {
+        if (!templateRepository.exists(template.getId())) {
+            throw new NullEntityException(
+                    SERVICE_NAME,
+                    "Template does not exist in database."
+            );
+        }
+        try {
+            templateRepository.save(template);
+        } catch (Exception e) {
+            throw new SystemException(SERVICE_NAME, e.getMessage());
         }
     }
 
-    /**
-     * @param keyword 搜索关键词
-     * @return 与关键词匹配的模板列表
-     */
-    @Override
-    public Set<Template> searchTemplates(String keyword) {
-        return templateRepository.findAllByTitleContainsOrDescriptionContains(keyword);
+    // TODO
+    public Set<Template> searchTemplateByName(String name) {
+        return null;
     }
-
-
-    @Override
-    public Set<Template> getAllTempaltes() {
-        Set<Template> templates=new HashSet<Template>();
-        templates.addAll(templateRepository.findAll());//给set填充
-        return templates;
-    }
-
-    /**
-     *
-     * @param template 针对新创建的没有ID的Template
-     * @return
-     */
-    public boolean templateAlreadyExist(Template template){
-        String title = template.getTitle();
-        String description = template.getDescription();
-        //判断相同标题的检查项目是否存在
-        if(templateRepository.findByTitle(title) != null){
-            return true;
-        }
-        else if(templateRepository.findByDescription(description) != null) {
-            return true;
-        }
-        else{
-            return false;
-        }
-    }
-
-
-    public boolean checkItemAlreadyInTemplate(Template template, CheckItem checkItem){
-        Set<CheckItem> checkItems = template.getCheckItems();
-        for (CheckItem item : checkItems) {
-            if(checkItem.getId() == item.getId()){
-                return true;
-            }
-        }
-        return false;
-    }
-
-
 }
